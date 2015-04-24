@@ -1,6 +1,6 @@
 # TODO:
-# - fio >= 2.1.1, git://git.kernel.dk/fio.git
-# - kernel modules (requires OFED kernel headers)
+# - fio engine module (BR: headers from fio sources)
+# - kernel modules (BR: OFED kernel headers)
 #
 # Conditional build:
 %bcond_with	fio		# FIO module
