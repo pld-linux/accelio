@@ -1,0 +1,21 @@
+--- accelio-1.6/examples/raio/usr/fio/libraio.c.orig	2016-03-28 14:58:45.000000000 +0200
++++ accelio-1.6/examples/raio/usr/fio/libraio.c	2016-04-10 19:16:54.244086124 +0200
+@@ -130,7 +130,7 @@
+ 				 unsigned int max, const struct timespec *t)
+ {
+ 	struct libraio_data *ld = td->io_ops->data;
+-	unsigned actual_min = td->o.iodepth_batch_complete == 0 ? 0 : min;
++	unsigned actual_min = td->o.iodepth_batch_complete_min == 0 ? 0 : min;
+ 	int r, events = 0;
+ 
+ 	do {
+--- accelio-1.6/examples/raio/usr/fio/Makefile.am.orig	2016-03-28 14:58:45.000000000 +0200
++++ accelio-1.6/examples/raio/usr/fio/Makefile.am	2016-04-10 21:54:08.050356893 +0200
+@@ -30,6 +30,7 @@
+ # list of sources for the 'libraio_fio' shared library
+ libraio_fio_la_SOURCES = libraio.c
+ 
++libraio_fio_la_LDFLAGS = -module -avoid-version
+ libraio_fio_la_LIBADD = -lraio -lxio $(libxio_rdma_ldflags) -lrt -ldl -lpthread  \
+ 	     		-L$(top_builddir)/src/usr/ -L$(top_builddir)/examples/raio/
+ 

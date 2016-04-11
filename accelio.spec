@@ -1,24 +1,26 @@
 # TODO:
-# - fio engine module (BR: headers from fio sources)
 # - kernel modules (BR: OFED kernel headers)
 #
 # Conditional build:
-%bcond_with	fio		# FIO module
+%bcond_without	fio		# FIO module
 %bcond_with	kernel		# kernel modules
 %bcond_without	static_libs	# static libraries
 #
 Summary:	Open Source I/O, Message and RPC Acceleration library
 Summary(pl.UTF-8):	Mająca otwarte źródła biblioteka przyspieszająca we/wy, komunikaty i RPC
 Name:		accelio
-Version:	1.3
+Version:	1.6
 Release:	1
 License:	BSD
 Group:		Libraries
 Source0:	https://github.com/accelio/accelio/archive/v%{version}/%{name}-%{version}.tar.gz
-# Source0-md5:	3a75f4139c72a797740a50e8033f74ae
+# Source0-md5:	0f6634e03ff1bf2e9b83e554202d093f
+Patch0:		%{name}-fio.patch
+Patch1:		%{name}-sse.patch
 URL:		http://www.accelio.org/
 BuildRequires:	autoconf >= 2.50
 BuildRequires:	automake >= 1:1.11
+%{?with_fio:BuildRequires:	fio-devel >= 2.8}
 BuildRequires:	libaio-devel
 BuildRequires:	libevent-devel >= 2
 BuildRequires:	libibverbs-devel
@@ -65,6 +67,8 @@ Statyczne biblioteki Accelio.
 
 %prep
 %setup -q
+%patch0 -p1
+%patch1 -p1
 
 %{__sed} -i -e 's/-Werror //' configure.ac
 
@@ -73,12 +77,13 @@ Statyczne biblioteki Accelio.
 %{__aclocal}
 %{__autoconf}
 %{__automake}
-for d in src/kernel/xio src/kernel/rdma src/kernel/tcp examples/kernel/hello_world examples/kernel/hello_world_mt tests/kernel/hello_test ; do
+for d in src/kernel/xio examples/kernel/hello_world examples/kernel/hello_world_mt tests/kernel/hello_test examples/raio/kernel/nbdx ; do
 cd $d
 %{__autoconf}
 cd -
 done
 %configure \
+	%{?with_fio:FIO_ROOT=%{_includedir}/fio} \
 	--disable-silent-rules \
 	%{!?with_static_libs:--disable-static} \
 	%{?with_fio:--enable-fio-build} \
@@ -90,6 +95,11 @@ rm -rf $RPM_BUILD_ROOT
 
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT
+
+# fio module, .la is useless
+%{__rm} $RPM_BUILD_ROOT%{_libdir}/libraio_fio.la
+# test program
+%{__rm} $RPM_BUILD_ROOT%{_bindir}/event_loop_tests
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -108,6 +118,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_bindir}/xiosrvd
 %attr(755,root,root) %{_libdir}/libraio.so.*.*.*
 %attr(755,root,root) %ghost %{_libdir}/libraio.so.0
+%if %{with fio}
+%attr(755,root,root) %{_libdir}/libraio_fio.so
+%endif
 %attr(755,root,root) %{_libdir}/libxio.so.*.*.*
 %attr(755,root,root) %ghost %{_libdir}/libxio.so.0
 

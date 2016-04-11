@@ -1,0 +1,23 @@
+"SPINLOCK_NG" is x86-specific;
+also, use __builtin_ia32_pause directly, as _mm_pause used to be inside target("sse") pragma until gcc 5.?
+--- accelio-1.6/src/usr/linux/kernel.h.orig	2016-03-28 14:58:45.000000000 +0200
++++ accelio-1.6/src/usr/linux/kernel.h	2016-04-10 21:34:41.710405838 +0200
+@@ -89,7 +89,9 @@
+ 
+ typedef volatile int spinlock_t;
+ 
++#if defined(__i386__) || defined(__x86_64__)
+ #define SPINLOCK_NG
++#endif
+ 
+ #ifndef SPINLOCK_NG
+ 
+@@ -146,7 +148,7 @@
+ {
+ 	while (__sync_lock_test_and_set(spinlock, 1))
+ 		while (*spinlock)
+-			_mm_pause();
++			__builtin_ia32_pause();
+ }
+ 
+ static inline int spin_try_lock(spinlock_t* spinlock)
