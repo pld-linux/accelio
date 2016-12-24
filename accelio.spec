@@ -9,18 +9,19 @@
 Summary:	Open Source I/O, Message and RPC Acceleration library
 Summary(pl.UTF-8):	Mająca otwarte źródła biblioteka przyspieszająca we/wy, komunikaty i RPC
 Name:		accelio
-Version:	1.6
+Version:	1.7
 Release:	1
 License:	BSD
 Group:		Libraries
+#Source0Download: https://github.com/accelio/accelio/releases
 Source0:	https://github.com/accelio/accelio/archive/v%{version}/%{name}-%{version}.tar.gz
-# Source0-md5:	0f6634e03ff1bf2e9b83e554202d093f
+# Source0-md5:	b363e15ea8f7dac2179a610c1393a624
 Patch0:		%{name}-fio.patch
 Patch1:		%{name}-sse.patch
 URL:		http://www.accelio.org/
 BuildRequires:	autoconf >= 2.50
 BuildRequires:	automake >= 1:1.11
-%{?with_fio:BuildRequires:	fio-devel >= 2.8}
+%{?with_fio:BuildRequires:	fio-devel >= 2.14}
 BuildRequires:	libaio-devel
 BuildRequires:	libevent-devel >= 2
 BuildRequires:	libibverbs-devel
