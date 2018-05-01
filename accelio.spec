@@ -10,7 +10,7 @@ Summary:	Open Source I/O, Message and RPC Acceleration library
 Summary(pl.UTF-8):	Mająca otwarte źródła biblioteka przyspieszająca we/wy, komunikaty i RPC
 Name:		accelio
 Version:	1.7
-Release:	2
+Release:	3
 License:	BSD
 Group:		Libraries
 #Source0Download: https://github.com/accelio/accelio/releases
