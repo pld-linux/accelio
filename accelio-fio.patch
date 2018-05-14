@@ -29,6 +29,15 @@
  	struct libraio_engine_data *engine_data = io_u->engine_data;
  
  	fio_ro_check(td, io_u);
+@@ -170,7 +170,7 @@
+ static void fio_libraio_queued(struct thread_data *td, struct io_u **io_us,
+ 			       unsigned int nr)
+ {
+-	struct timeval now;
++	struct timespec now;
+ 	unsigned int i;
+ 
+ 	if (!fio_fill_issue_time(td))
 @@ -188,7 +188,7 @@
  
  static int fio_libraio_commit(struct thread_data *td)
