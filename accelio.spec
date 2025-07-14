@@ -69,8 +69,8 @@ Statyczne biblioteki Accelio.
 
 %prep
 %setup -q
-%patch0 -p1
-%patch1 -p1
+%patch -P0 -p1
+%patch -P1 -p1
 
 %{__sed} -i -e 's/-Werror //' configure.ac
 
