@@ -1,6 +1,17 @@
---- accelio-1.7/examples/raio/usr/fio/libraio.c.orig	2016-12-24 13:09:13.375548622 +0100
-+++ accelio-1.7/examples/raio/usr/fio/libraio.c	2016-12-25 00:04:40.251766246 +0100
-@@ -107,7 +107,7 @@
+--- accelio-1.7/examples/raio/usr/fio/libraio.c.orig	2016-07-21 20:56:43.000000000 +0200
++++ accelio-1.7/examples/raio/usr/fio/libraio.c	2026-05-20 21:47:11.490607894 +0200
+@@ -50,6 +50,10 @@
+ 
+ #include "fio.h"
+ 
++#ifndef FIO_O_ATOMIC
++#define FIO_O_ATOMIC 0
++#endif
++
+ #ifdef VISIBILITY
+ #define __RAIO_PUBLIC __attribute__((visibility("default")))
+ #else
+@@ -107,7 +111,7 @@ static int fio_libraio_prep(struct threa
  
  static struct io_u *fio_libraio_event(struct thread_data *td, int event)
  {
@@ -9,7 +20,7 @@
  	struct raio_event *ev;
  	struct io_u *io_u;
  
-@@ -129,8 +129,8 @@
+@@ -129,8 +133,8 @@ static struct io_u *fio_libraio_event(st
  static int fio_libraio_getevents(struct thread_data *td, unsigned int min,
  				 unsigned int max, const struct timespec *t)
  {
@@ -20,16 +31,19 @@
  	int r, events = 0;
  
  	do {
-@@ -152,7 +152,7 @@
+@@ -150,9 +154,9 @@ static int fio_libraio_getevents(struct
+ 	return r < 0 ? r : events;
+ }
  
- static int fio_libraio_queue(struct thread_data *td, struct io_u *io_u)
+-static int fio_libraio_queue(struct thread_data *td, struct io_u *io_u)
++static enum fio_q_status fio_libraio_queue(struct thread_data *td, struct io_u *io_u)
  {
 -	struct libraio_data *ld = td->io_ops->data;
 +	struct libraio_data *ld = td->io_ops_data;
  	struct libraio_engine_data *engine_data = io_u->engine_data;
  
  	fio_ro_check(td, io_u);
-@@ -170,7 +170,7 @@
+@@ -170,7 +174,7 @@ static int fio_libraio_queue(struct thre
  static void fio_libraio_queued(struct thread_data *td, struct io_u **io_us,
  			       unsigned int nr)
  {
@@ -38,7 +52,7 @@
  	unsigned int i;
  
  	if (!fio_fill_issue_time(td))
-@@ -188,7 +188,7 @@
+@@ -188,7 +192,7 @@ static void fio_libraio_queued(struct th
  
  static int fio_libraio_commit(struct thread_data *td)
  {
@@ -47,16 +61,22 @@
  	struct raio_iocb	**iocbs;
  	struct io_u		**io_us;
  	int			ret;
-@@ -221,7 +221,7 @@
+@@ -219,14 +223,6 @@ static int fio_libraio_commit(struct thr
+ 	return ret;
+ }
  
- static int fio_libraio_cancel(struct thread_data *td, struct io_u *io_u)
- {
+-static int fio_libraio_cancel(struct thread_data *td, struct io_u *io_u)
+-{
 -	struct libraio_data *ld = td->io_ops->data;
-+	struct libraio_data *ld = td->io_ops_data;
- 	struct libraio_engine_data *engine_data = io_u->engine_data;
+-	struct libraio_engine_data *engine_data = io_u->engine_data;
+-
+-	return raio_cancel(ld->raio_ctx, &engine_data->iocb, ld->raio_events);
+-}
+-
  
- 	return raio_cancel(ld->raio_ctx, &engine_data->iocb, ld->raio_events);
-@@ -290,7 +290,7 @@
+ 
+ 
+@@ -290,7 +286,7 @@ static int raio_open_flags(struct thread
  
  	*_flags = -1;
  
@@ -65,7 +85,7 @@
  		log_err("libraio: trim only applies to block device\n");
  		return 1;
  	}
-@@ -357,7 +357,7 @@
+@@ -357,7 +353,7 @@ static int fio_libraio_open(struct threa
  	char			path[256];
  	char			host[256];
  	uint32_t		port;
@@ -74,7 +94,7 @@
  
  	dprint(FD_FILE, "fd open %s\n", f->file_name);
  
-@@ -436,7 +436,7 @@
+@@ -436,7 +432,7 @@ stop:
  static int fio_libraio_open_file(struct thread_data *td, struct fio_file *f)
  {
  	int			ret;
@@ -83,7 +103,7 @@
  
  	if (ld->fd != -1) {
  		f->fd = ld->fd;
-@@ -475,7 +475,7 @@
+@@ -475,7 +471,7 @@ static int fio_libraio_close(struct thre
  static int fio_libraio_close_file(struct thread_data *td, struct fio_file *f)
  {
  	int			ret;
@@ -92,7 +112,7 @@
  
  	/* don't close the file until cleanup */
  	if (ld->force_close == 0) {
-@@ -512,7 +512,7 @@
+@@ -512,7 +508,7 @@ static int fio_libraio_get_file_size(str
  		return 0;
  	}
  
@@ -101,7 +121,7 @@
  
  	ret = fio_libraio_open(td, f);
  	if (ret != 0) {
-@@ -570,7 +570,7 @@
+@@ -570,7 +566,7 @@ static int fio_libraio_init(struct threa
  	ld->iocbs_nr = 0;
  	ld->fd = -1;
  
@@ -110,7 +130,7 @@
  
  	f.file_name = td->o.filename;
  	ret = fio_libraio_open_file(td, &f);
-@@ -597,7 +597,7 @@
+@@ -597,7 +593,7 @@ static int fio_libraio_init(struct threa
  
  static void fio_libraio_cleanup(struct thread_data *td)
  {
@@ -119,7 +139,7 @@
  	struct libraio_engine_data	*engine_data;
  	struct io_u			*io_u;
  	int				i;
-@@ -619,7 +619,7 @@
+@@ -619,7 +615,7 @@ static void fio_libraio_cleanup(struct t
  		free(ld->io_us);
  		free(ld->engine_datas);
  		free(ld);
@@ -128,6 +148,14 @@
  	}
  }
  
+@@ -635,7 +631,6 @@ __RAIO_PUBLIC struct ioengine_ops ioengi
+ 	.prep			= fio_libraio_prep,
+ 	.queue			= fio_libraio_queue,
+ 	.commit			= fio_libraio_commit,
+-	.cancel			= fio_libraio_cancel,
+ 	.getevents		= fio_libraio_getevents,
+ 	.event			= fio_libraio_event,
+ 	.cleanup		= fio_libraio_cleanup,
 --- accelio-1.6/examples/raio/usr/fio/Makefile.am.orig	2016-03-28 14:58:45.000000000 +0200
 +++ accelio-1.6/examples/raio/usr/fio/Makefile.am	2016-04-10 21:54:08.050356893 +0200
 @@ -30,6 +30,7 @@
